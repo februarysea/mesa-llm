@@ -89,6 +89,23 @@ def move_one_step(agent: "LLMAgent", direction: str) -> str:
     x, y = _get_agent_position(agent)
 
     new_pos = (x + dx, y + dy)
+
+    # Guard against out-of-bounds moves and return a friendly message
+    # instead of letting the underlying grid raise a cryptic exception.
+    if isinstance(grid, OrthogonalMooreGrid | OrthogonalVonNeumannGrid):
+        if new_pos not in grid._cells:
+            return (
+                f"Agent {agent.unique_id} is at the boundary and cannot move "
+                f"{direction}. Try a different direction."
+            )
+    elif isinstance(grid, SingleGrid | MultiGrid):
+        nx, ny = new_pos
+        if not (0 <= nx < grid.width and 0 <= ny < grid.height):
+            return (
+                f"Agent {agent.unique_id} is at the boundary and cannot move "
+                f"{direction}. Try a different direction."
+            )
+
     target_coordinates = tuple(new_pos)
     teleport_to_location(agent, target_coordinates)
     return f"agent {agent.unique_id} moved to {target_coordinates}."
